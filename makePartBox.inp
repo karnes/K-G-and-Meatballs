@@ -1,16 +1,16 @@
 #
 # box of spherical particles
 #
-# All the atoms from different molecules will be separated at least /tolerance/ Angstroms
+# All the atoms from different molecules will be separated at least /tolerance/ distance units
 tolerance 3.0
 # The file type of input and output files is xyz
 filetype xyz
 # The name of the output file
 output np_box.xyz
-# monomer molecules will be put in a box
-# defined by the minimum coordinates x, y and z = XX XX XX and maximum
-# coordinates XX XX XX 
-# (the keyword "inside cube 0. 0. 0. 200.") could be used as well.
+# Fibonacci spheres will be packed into a cubic box
+# defined by the minimum coordinates x, y and z 
+# and edge length l 
+# (e.g. "inside cube 0. 0. 0. 200.")
 seed -1
 randominitialpoint
 structure np.xyz
