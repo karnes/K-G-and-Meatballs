@@ -1,0 +1,322 @@
+# FENE beadspring benchmark
+# reduce timesteps and lengthen equilibration times
+#  
+units       lj
+atom_style  full
+special_bonds   fene
+variable ftemp equal TEMP
+#variable fpress equal PRESSURE
+#
+read_data loaded.data
+pair_style soft 1.2
+#
+neighbor    0.4 bin
+neigh_modify    every 1 delay 1
+comm_modify cutoff 2.0
+#
+bond_style      fene
+bond_coeff  * 30.0 1.5 1.0 1.0
+angle_style cosine
+angle_coeff * 0.0 #-0.013
+#
+#
+group poly type 3 4  
+group centers type 1
+group np type 1 2
+#
+# ramp up soft potential
+#
+pair_style soft 1.2
+pair_coeff * * 0.0
+#
+delete_bonds all angle 1
+#
+fix fxnve np rigid/nve molecule
+variable prefactor equal ramp(2,99)
+fix 1 all adapt 1 pair soft a * * v_prefactor
+fix 2 poly nve
+fix 3 all langevin ${ftemp} 1.0 $(100*dt) 904297
+fix cntr all recenter INIT INIT INIT
+thermo     100
+#
+#dump dmpAll all atom 100 dump.lammpstrj
+#dump dmpxyz all xyz 1000 dump1.xyz
+#
+timestep 0.002
+run 100000
+#
+#undump dmpAll
+#undump dmpxyz
+#
+write_data after_soft1.data
+write_restart after_soft1.rsp
+print "SOFT POTENTIAL RAMP UP COMPLETE."
+#
+unfix cntr
+unfix 1
+pair_style none
+#
+# plateau soft
+#
+pair_style soft 1.2
+pair_coeff * * 99.0
+variable prefactor equal ramp(99,99)
+fix 1 all adapt 1 pair soft a 1 1 v_prefactor
+fix 2 poly nve
+fix 3 all langevin 1.0 1.0 $(100*dt) 45397
+fix cntr all recenter INIT INIT INIT
+thermo          100
+#
+#dump dmpxyz all xyz 1000 dump2.xyz
+timestep 0.002
+run 100000
+#
+#dump dmpxyz all xyz 1000 dump2.xyz
+#undump dmpxyz
+write_data after_soft2.data
+write_restart after_soft2.rsp
+print "SOFT POTENTIAL PLATEAU (99) COMPLETE."
+
+#quit
+unfix 1
+unfix 2
+unfix 3
+unfix cntr
+pair_style none
+#
+# introduce proper styles and equilibrate
+#
+pair_style  lj/cut LJ_CUT #1.22462 WCA, 1.75 Lin-Rigg
+pair_modify shift yes
+pair_coeff  * * 1.0 1.0 LJ_CUT #1.22462 WCA, 1.75 Lin-Rigg
+#variable rampEps equal ramp(0.6,1.0)
+#variable rampSig equal ramp(0.6,1.0)
+#fix rampLJ all adapt 1 pair lj/cut sigma * * v_rampSig pair lj/cut epsilon * * v_rampEps reset yes
+fix fxnve np rigid/nve molecule
+#
+fix     1 poly nve
+fix     2 all langevin 1.0 1.0 $(100*dt) 904297
+fix cntr all recenter INIT INIT INIT
+#
+print "STARTING L-J POTENTIAL"
+timestep 0.0003
+run 50000
+write_data after_LJ_ramp1.data
+#
+#unfix rampLJ
+unfix 1
+unfix 2
+#
+pair_style  lj/cut LJ_CUT #1.22462 WCA, 1.75 Lin-Rigg
+pair_modify shift yes
+pair_coeff  * * 1.0 1.0 LJ_CUT #1.22462 WCA, 1.75 Lin-Rigg
+fix fxnve np rigid/nve molecule
+#
+fix     1 poly nve
+fix     2 all langevin 1.0 1.0 $(100*dt) 904297
+fix cntr all recenter INIT INIT INIT
+#
+print "SECOND L-J POTENTIAL"
+timestep 0.001
+run 50000
+write_data after_LJ_ramp2.data
+#
+unfix 1
+unfix 2
+#
+pair_style  lj/cut LJ_CUT #1.22462 WCA, 1.75 Lin-Rigg
+pair_modify shift yes
+pair_coeff  * * 1.0 1.0 LJ_CUT #1.22462 WCA, 1.75 Lin-Rigg
+fix fxnve np rigid/nve molecule
+#
+fix     1 poly nve
+fix     2 all langevin 1.0 1.0 $(100*dt) 904297
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.002
+run 100000
+print "INITIAL L-J RELAXATION COMPLETE"
+#
+# long equilibration
+#
+write_data after_equilib.data
+write_restart after_equilib.rsp
+#
+# ramp up temperature
+fix     1 poly nve
+fix     2 all langevin 1.0 10.0 $(100*dt) 9047
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.002
+run 500000
+# high temp equilibrate
+fix     1 poly nve
+fix     2 all langevin 10.0 10.0 $(100*dt) 12597
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.002
+run 1000000
+write_data before_compress.data
+write_restart before_compress.rsp
+
+# shrink simulation box
+fix defBox all deform 1 x final -HALFSIM HALFSIM y final -HALFSIM HALFSIM z final -HALFSIM HALFSIM
+
+timestep 0.001
+#dump dmpxyz all xyz 1000 dump1.xyz
+run 2000000
+#undump dmpxyz
+unfix defBox
+write_data after_compress_T10.data
+write_restart after_compress_T10.rsp
+# pause at desired volume
+fix     1 poly nve
+fix     2 all langevin 10.0 10.0 $(100*dt) 432597
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.001
+run 200000
+# ramp down temperature
+fix     1 poly nve
+fix     2 all langevin 10.0 1.0 $(100*dt) 432597
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.001
+run 200000
+# pause temp ramp
+fix     1 poly nve
+fix     2 all langevin 1.0 1.0 $(100*dt) 432597
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.001
+run 200000
+write_data after_compress_T01.data
+write_restart after_compress_T01.rsp
+# ramp down temperature
+fix     1 poly nve
+fix     2 all langevin 1.0 ${ftemp} $(100*dt) 432597
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.001
+run 200000
+# equilibrate dense box
+fix     1 poly nve
+fix     2 all langevin ${ftemp} ${ftemp} $(100*dt) 340297
+fix cntr all recenter INIT INIT INIT
+#
+timestep 0.001
+run 500000
+write_data after_compress_strTemp.data
+write_restart after_compress_strTemp.rsp
+#
+# get equilibrium pressure
+#
+variable ipress equal "press"
+fix avp all ave/time 1 10000 10000 v_ipress
+run 10000
+variable tpress equal f_avp
+variable fpress equal ${tpress}
+print "Average pressure of compressed box: ${fpress}"
+if "${fpress} < 0.25" then "variable fpress equal 0.25"
+unfix avp
+print "Average pressure of compressed box: ${fpress}"
+#
+# shift to pressure control and equilibrate
+#
+pair_modify shift yes
+pair_coeff  * * 1.0 1.0 LJ_CUT #1.22462 WCA, 1.75 Lin-Rigg
+fix fxnve np rigid/nve molecule
+#
+fix     1 poly nve
+fix     2 all langevin ${ftemp} ${ftemp} $(100*dt) 904297
+fix cntr all recenter INIT INIT INIT
+fix 3 all press/berendsen iso ${fpress} ${fpress} $(1000*dt)
+#
+thermo 1000
+timestep 0.0001
+run 10000
+timestep 0.001
+run 500000
+timestep 0.002
+run 500000
+#
+# production run
+#
+variable dumpFreq equal 100000
+reset_timestep 0
+#
+# these are the "ready for deformation" files
+#
+write_data      sys.deformMe.data
+write_restart   sys.deformMe.rsp 
+#
+# stress/atom approach
+#
+compute satom all stress/atom NULL
+compute redu all reduce sum c_satom[1] c_satom[2] c_satom[3]
+#
+# store the initial box x length
+#
+variable tmp equal "lx"
+variable L0 equal ${tmp}
+print "Initial box length (x), L0: ${L0}"
+#
+# deform the box
+#
+reset_timestep 0
+variable srate_in equal $(1/(50000))  
+#
+dump dmpXYZ all xyz ${dumpFreq} dump_stretch.xyz
+#
+# Output strain and stress info to file
+variable strain equal "(lx - v_L0)/v_L0"
+variable l1 equal "lx"
+variable l2 equal "ly"
+variable l3 equal "lz"
+variable Vol equal vol
+variable p1 equal "v_strain"
+variable p2 equal "-pxx"
+variable p3 equal "-pyy"
+variable p4 equal "-pzz"
+variable p5 equal "-pxy"
+variable p6 equal "-pxz"
+variable p7 equal "-pyz"
+#
+fix av0 all ave/time 1 100 100 v_p1 v_p2 v_p3 v_p4
+fix av1 all ave/time 1 100 100 c_redu[1] c_redu[2] c_redu[3]
+fix av2 all ave/time 1 100 100 v_l1 v_l2 v_l3 v_Vol
+#
+run 100 # set up fixes for below
+#
+variable strSteps equal "1.0/v_srate_in/dt"  #"0.2/v_srate_in/dt" # (0.2 --> 20% elongation)
+# write a restart every 2% elongation
+variable rspSteps equal "v_strSteps/50" # N restarts per simulated elongation 
+print "strSteps = ${strSteps} rspSteps = ${rspSteps}"
+restart ${rspSteps} stretching.*.rsp
+#
+variable sigmaxx equal f_av1[1]/f_av2[4] # total stress_x/volume
+variable sigmayy equal f_av1[2]/f_av2[4]
+variable sigmazz equal f_av1[3]/f_av2[4]
+#
+thermo_style custom step temp lx ly lz pxx pyy pzz pxy pxz pyz v_strain v_sigmaxx v_sigmayy v_sigmazz ke pe press
+fix def1 all print 100 "${l1} ${l2} ${l3} ${p1} ${p2} ${p3} ${p4} ${p1} ${sigmaxx} ${sigmayy} ${sigmazz}" file stress-strain.txt screen no
+#
+unfix 3
+fix 3 all press/berendsen y ${fpress} ${fpress} $(1000*dt) z ${fpress} ${fpress} $(1000*dt)
+fix defBox all deform 1 x erate ${srate_in} units box remap x
+#
+run ${strSteps}
+unfix defBox
+unfix def1
+#
+write_data      sys.stretched.data
+write_restart   sys.stretched.rsp                                               
+#
+# now relax the stretched box for 10^5 steps
+#
+unfix 3
+fix 3 all press/berendsen iso ${fpress} ${fpress} $(1000*dt)
+run   100000
+#
+write_data      sys.stretchRelax.data
+write_restart   sys.stretchRelax.rsp                                               

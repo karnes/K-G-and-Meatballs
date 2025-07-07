@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH -t 23:55:00
+#SBATCH -J <job_name>
+#SBATCH -A <bank_name>
+#SBATCH -p pbatch
+#SBATCH -N 12 
+
+#revise to match HPC & LAMMPS executable
+srun -n672 ~/lammps/build_ruby/lmp -in in.run 

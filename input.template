@@ -1,0 +1,15 @@
+Loaded Polymer test input
+
+BEADS_PER_STRAND          beads per strand
+1.02        min distance from site i-1 to i+1 (L-J)
+0.97        distance between monomers (L-J)
+0.01        rhostar (initial)
+0.RHO_STAR        rhostar (final)
+
+0.PACK_FRACTION       particle packing fraction (vol/tot_vol)
+PART_RAD.5        particle radius (L-J)
+0.5         radius of surface beads
+1.5         monomer-particle bead cutoff(L-J) for init config               
+97.31       Box edge (L-J)
+
+
