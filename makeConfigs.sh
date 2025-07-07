@@ -1,3 +1,4 @@
+#!/bin/csh
 #
 foreach beads(100)
 foreach rhoStar(87) # /100
