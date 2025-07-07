@@ -8,7 +8,8 @@ user input as a text-based input file and generates
 starting conficurations and LAMMPS imput files that perform the 
 initial relaxation / equilibration of these configurations. 
 As the name suggests, this approach implements the Kremer-Grest 
-bead-spring model [CITE] within the LAMMPS molecular dynamics environment. 
+bead-spring model [Kremer, K.; Grest, G. S. J. Chem. Phys. 1990, 92 (8), 5057–5086. https://doi.org/10.1063/1.458541
+] within the LAMMPS molecular dynamics environment. 
 KGMB can create configurations with monodisperse, linear polymer 
 strands of arbitrary length and the core utility is the ability 
 to optionally include spherical filler particles. 
