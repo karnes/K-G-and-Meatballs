@@ -19,7 +19,7 @@ Please cite the work [CITE] when using this code.
 ## Getting Started
 
 Generation of LAMMPS simulation input files for polymer composites.
-*Requirements:* PACKMOL [CITE] installed at a known $PATH
+*Requirements:* PACKMOL [https://m3g.github.io/packmol/] installed at a known $PATH
 -- default path = ~/packmol/packmol (user can revise in makeLoaded.c)
 
 to use:
