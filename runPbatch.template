@@ -6,4 +6,4 @@
 #SBATCH -N 12 
 
 #revise to match HPC & LAMMPS executable
-srun -n672 ~/lammps/build_ruby/lmp -in in.run 
+srun -n672 ~/lammps/build/lmp -in in.run 
