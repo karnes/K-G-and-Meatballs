@@ -1,11 +1,10 @@
-#!/bin/csh
 #
 foreach beads(100)
 foreach rhoStar(87) # /100
-foreach packFrac(150) # 250) #350 425 500) # /1000
-foreach partRad(2) # 4)
-foreach ftemp(0.3) # 1.0)
-foreach ljcut(1.22462) # 1.75)
+foreach packFrac(150 250 350 425 500) # /1000
+foreach partRad(2 4 9)
+foreach ftemp(0.3 1.0)
+foreach ljcut(1.75 1.122462)
 #
 mkdir FENE_${beads}chain_${partRad}rad_${packFrac}_T${ftemp}_LJ${ljcut}
 cd    FENE_${beads}chain_${partRad}rad_${packFrac}_T${ftemp}_LJ${ljcut}
